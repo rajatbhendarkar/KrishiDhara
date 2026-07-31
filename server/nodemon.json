@@ -1,0 +1,16 @@
+{
+  "verbose": true,
+  "ignore": [
+    "database/*.json",
+    "*.json",
+    "*.log"
+  ],
+  "watch": [
+    "*.js",
+    "routes/",
+    "controllers/",
+    "middlewares/",
+    "config/",
+    "utils/"
+  ]
+}
