@@ -1,6 +1,6 @@
 // Frontend API Communication Layer with Graceful Fallback
 
-const BASE_URL = '/api';
+const BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const apiFetch = async (endpoint, options = {}) => {
   const token = localStorage.getItem('km_token');
