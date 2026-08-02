@@ -42,38 +42,38 @@ export const LandingPage = ({ setActiveTab, onOpenVoiceModal }) => {
           </div>
 
           {/* Title */}
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1] text-slate-900 dark:text-white" style={{fontFamily: "'Outfit', 'Noto Sans Devanagari', sans-serif", fontWeight: 900}}>
+          <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.15] sm:leading-[1.1] text-slate-900 dark:text-white" style={{fontFamily: "'Outfit', 'Noto Sans Devanagari', sans-serif", fontWeight: 900}}>
             {t('heroTitleLine1')}
             <br />
             <span className="text-emerald-500">{t('heroTitleLine2')}</span>
           </h1>
 
           {/* Subtitle */}
-          <p className="max-w-2xl mx-auto text-base sm:text-lg text-slate-500 dark:text-slate-300 leading-relaxed" style={{fontFamily: "'Noto Sans Devanagari', 'Inter', sans-serif"}}>
+          <p className="max-w-2xl mx-auto text-sm sm:text-lg text-slate-500 dark:text-slate-300 leading-relaxed px-2" style={{fontFamily: "'Noto Sans Devanagari', 'Inter', sans-serif"}}>
             {t('heroSubtitle')}
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2 w-full max-w-md sm:max-w-none mx-auto">
             <button
               onClick={() => setActiveTab('doctor')}
-              className="flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 active:scale-95 transition-all"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 active:scale-95 transition-all min-h-[48px]"
             >
-              <Mic className="w-4 h-4" />
+              <Mic className="w-4 h-4 shrink-0" />
               <span>{t('heroCtaDoctor')}</span>
             </button>
 
             <button
               onClick={onOpenVoiceModal}
-              className="flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all shadow"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all shadow min-h-[48px]"
             >
-              <Mic className="w-4 h-4 text-emerald-500" />
+              <Mic className="w-4 h-4 text-emerald-500 shrink-0" />
               <span>{t('heroCtaVoice')}</span>
             </button>
           </div>
 
           {/* Check badges */}
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-2">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-6 gap-y-2 pt-2">
             {checks.map(key => (
               <div key={key} className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -87,10 +87,10 @@ export const LandingPage = ({ setActiveTab, onOpenVoiceModal }) => {
 
       {/* STATS */}
       <section className="max-w-5xl mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 text-center shadow-sm">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-8 text-center shadow-sm">
           {stats.map((s, i) => (
-            <div key={i} className="space-y-1">
-              <div className="text-3xl font-extrabold text-emerald-500 font-outfit">{s.value}</div>
+            <div key={i} className="space-y-1 p-2">
+              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-500 font-outfit">{s.value}</div>
               <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t(s.labelKey)}</div>
             </div>
           ))}

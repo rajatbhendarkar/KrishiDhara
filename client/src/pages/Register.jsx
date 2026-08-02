@@ -112,8 +112,8 @@ export const Register = ({ setActiveTab, onLoginSuccess }) => {
   const inputCls = "w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-400";
 
   return (
-    <div className="max-w-md mx-auto py-12 px-4">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 space-y-6 shadow-xl">
+    <div className="max-w-md mx-auto py-6 sm:py-12 px-3 sm:px-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-8 space-y-5 sm:space-y-6 shadow-xl">
         
         {/* Header */}
         <div className="text-center space-y-2">
