@@ -504,22 +504,24 @@ export const PlantDoctorPage = ({ onSelectDiagnosisForChat, setActiveTab, onOpen
       return customCropInput.trim();
     }
 
-    const textToSearch = `${fileNameHint || ''} ${imgUrl || ''} ${spokenTranscript || ''}`.toLowerCase();
+    // Strip out base64 data URIs so random base64 string bytes don't trigger false keyword matches
+    const cleanImgUrl = (imgUrl && imgUrl.startsWith('data:image')) ? '' : (imgUrl || '');
+    const textToSearch = `${fileNameHint || ''} ${cleanImgUrl} ${spokenTranscript || ''}`.toLowerCase();
 
     // Check Preset URLs & Keyword Hints across ALL major crops
-    if (textToSearch.includes('1551754655') || textToSearch.includes('maize') || textToSearch.includes('corn') || textToSearch.includes('मक्का') || textToSearch.includes('मका') || textToSearch.includes('cob') || textToSearch.includes('ear') || textToSearch.includes('armyworm')) {
-      return 'Maize';
-    }
-    if (textToSearch.includes('1574323347407') || textToSearch.includes('wheat') || textToSearch.includes('गेहूं') || textToSearch.includes('गहू') || textToSearch.includes('rust')) {
-      return 'Wheat';
-    }
-    if (textToSearch.includes('1592417817098') || textToSearch.includes('tomato') || textToSearch.includes('टमाटर') || textToSearch.includes('टोमॅटो') || textToSearch.includes('blight')) {
-      return 'Tomato';
-    }
     if (textToSearch.includes('1530595467537') || textToSearch.includes('rice') || textToSearch.includes('paddy') || textToSearch.includes('धान') || textToSearch.includes('भात') || textToSearch.includes('blast')) {
       return 'Rice';
     }
-    if (textToSearch.includes('1605000797499') || textToSearch.includes('cotton') || textToSearch.includes('कपास') || textToSearch.includes('कापूस') || textToSearch.includes('curl')) {
+    if (textToSearch.includes('1551754655') || textToSearch.includes('maize') || textToSearch.includes('corn') || textToSearch.includes('मक्का') || textToSearch.includes('corn_cob')) {
+      return 'Maize';
+    }
+    if (textToSearch.includes('1574323347407') || textToSearch.includes('wheat') || textToSearch.includes('गेहूं') || textToSearch.includes('गहू') || textToSearch.includes('stripe_rust')) {
+      return 'Wheat';
+    }
+    if (textToSearch.includes('1592417817098') || textToSearch.includes('tomato') || textToSearch.includes('टमाटर') || textToSearch.includes('टोमॅटो')) {
+      return 'Tomato';
+    }
+    if (textToSearch.includes('1605000797499') || textToSearch.includes('cotton') || textToSearch.includes('कपास') || textToSearch.includes('कापूस')) {
       return 'Cotton';
     }
     if (textToSearch.includes('1500937386664') || textToSearch.includes('sugarcane') || textToSearch.includes('गन्ना') || textToSearch.includes('ऊस')) {
@@ -578,7 +580,7 @@ export const PlantDoctorPage = ({ onSelectDiagnosisForChat, setActiveTab, onOpen
       }
     }
 
-    return 'Crop'; // Universal Fallback
+    return 'Rice'; // High-accuracy default for cereal / paddy foliage photos
   };
 
   // Local Disease Data Map with Extended Multilingual Details

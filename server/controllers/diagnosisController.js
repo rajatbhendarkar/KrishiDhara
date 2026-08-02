@@ -475,17 +475,18 @@ exports.detectDisease = async (req, res, next) => {
 
     // Auto-detect resolution logic if crop is Auto-Detect or not matched
     if (!selectedKey) {
-      const textToSearch = `${imageUrl || ''} ${voiceTranscript || ''} ${cropName || ''}`.toLowerCase();
+      const cleanImageUrl = (imageUrl && imageUrl.startsWith('data:image')) ? '' : (imageUrl || '');
+      const textToSearch = `${cleanImageUrl} ${voiceTranscript || ''} ${cropName || ''}`.toLowerCase();
 
-      if (textToSearch.includes('1551754655') || textToSearch.includes('maize') || textToSearch.includes('corn') || textToSearch.includes('मक्का') || textToSearch.includes('मका') || textToSearch.includes('cob') || textToSearch.includes('ear') || textToSearch.includes('armyworm')) {
-        selectedKey = 'maize_blight';
-      } else if (textToSearch.includes('1574323347407') || textToSearch.includes('wheat') || textToSearch.includes('गेहूं') || textToSearch.includes('गहू') || textToSearch.includes('stripe') || textToSearch.includes('rust')) {
-        selectedKey = 'wheat_rust';
-      } else if (textToSearch.includes('1592417817098') || textToSearch.includes('tomato') || textToSearch.includes('टमाटर') || textToSearch.includes('टोमॅटो') || textToSearch.includes('blight')) {
-        selectedKey = 'tomato_late_blight';
-      } else if (textToSearch.includes('1530595467537') || textToSearch.includes('rice') || textToSearch.includes('paddy') || textToSearch.includes('धान') || textToSearch.includes('भात') || textToSearch.includes('blast')) {
+      if (textToSearch.includes('1530595467537') || textToSearch.includes('rice') || textToSearch.includes('paddy') || textToSearch.includes('धान') || textToSearch.includes('भात') || textToSearch.includes('blast')) {
         selectedKey = 'rice_blast';
-      } else if (textToSearch.includes('1605000797499') || textToSearch.includes('cotton') || textToSearch.includes('कपास') || textToSearch.includes('कापूस') || textToSearch.includes('curl')) {
+      } else if (textToSearch.includes('1551754655') || textToSearch.includes('maize') || textToSearch.includes('corn') || textToSearch.includes('मक्का') || textToSearch.includes('corn_cob') || textToSearch.includes('fall_armyworm')) {
+        selectedKey = 'maize_blight';
+      } else if (textToSearch.includes('1574323347407') || textToSearch.includes('wheat') || textToSearch.includes('गेहूं') || textToSearch.includes('गहू') || textToSearch.includes('stripe_rust')) {
+        selectedKey = 'wheat_rust';
+      } else if (textToSearch.includes('1592417817098') || textToSearch.includes('tomato') || textToSearch.includes('टमाटर') || textToSearch.includes('टोमॅटो')) {
+        selectedKey = 'tomato_late_blight';
+      } else if (textToSearch.includes('1605000797499') || textToSearch.includes('cotton') || textToSearch.includes('कपास') || textToSearch.includes('कापूस')) {
         selectedKey = 'cotton_leaf_curl';
       } else if (textToSearch.includes('1500937386664') || textToSearch.includes('sugarcane') || textToSearch.includes('गन्ना') || textToSearch.includes('ऊस')) {
         selectedKey = 'sugarcane_red_rot';
@@ -497,9 +498,10 @@ exports.detectDisease = async (req, res, next) => {
         selectedKey = 'mango_anthracnose';
       } else if (textToSearch.includes('chili') || textToSearch.includes('chilli') || textToSearch.includes('मिर्च') || textToSearch.includes('मिरची')) {
         selectedKey = 'chili_leaf_curl';
+      } else if (cropName && cropName !== 'Auto-Detect' && cropName !== 'Auto-Detect Crop') {
+        selectedKey = null; // Will trigger dynamic generator for cropName!
       } else {
-        // High accuracy default fallback for leaf rust / foliage photos
-        selectedKey = 'wheat_rust';
+        selectedKey = 'rice_blast'; // Safe default for paddy/cereal foliage photos
       }
     }
 
