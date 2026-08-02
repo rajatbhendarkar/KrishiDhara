@@ -346,20 +346,56 @@ export const PlantDoctorPage = ({ onSelectDiagnosisForChat, setActiveTab, onOpen
     'Spray Metalaxyl + Mancozeb (2g/L water) immediately upon early symptom': {
       hi: 'मेटालेक्सिल + मैंकोज़ेब (2 ग्राम/लीटर पानी) का तुरंत छिड़काव करें',
       mr: 'मॅटालॅक्सिल + मॅन्कोझेब (२ ग्रॅम/लीटर पाणी) त्वरित फवारावे'
+    },
+    'Linear rows of bright yellow pustules arranged in stripes along leaf veins': {
+      hi: 'गेहूं की पत्तियों की शिराओं पर पीले रंग की चमकदार धारियां बनना',
+      mr: 'गव्हाच्या पानांच्या शिरांवर पिवळ्या रंगाच्या ओळी (तांबेरा) पडणे'
+    },
+    'Pustules burst open releasing powdery yellow spores': {
+      hi: 'पीले रंग के कवक बीजाणु हवा में उड़ना',
+      mr: 'पिवळ्या बुरशीचे बीजाणू हवेत पसरणे'
+    },
+    'Leaves dry up and turn yellow-brown, drastically dropping yield': {
+      hi: 'पत्तियां पीली-भूरी होकर सूखना और पैदावार में भारी कमी',
+      mr: 'पाने पिवळी-तपकिरी होऊन वाळणे व उत्पन्नात मोठी घट होणे'
+    },
+    'Airborne rust fungal spores traveling long distances': {
+      hi: 'हवा से फैलने वाले रतुआ कवक बीजाणु',
+      mr: 'हवेद्वारे दूरवर पसरणारे तांबेरा बुरशीचे बीजाणू'
+    },
+    'Cool temperature (10-15°C) with persistent night dew': {
+      hi: 'कम तापमान (10-15°C) और रात की ओस',
+      mr: 'थंड हवामान (१०-१५°C) आणि रात्री पडणारे दाट दव'
+    },
+    'Spray sour fermented buttermilk solution (1L in 10L water)': {
+      hi: 'खट्टी छाछ (ताक) का 10% घोल बनाकर छिड़काव करें',
+      mr: 'आंबट ताकाची फवारणी (१० लिटर पाण्यात १ लिटर ताक)'
+    },
+    'Plant rust resistant seed varieties (HD-2967, DBW-187)': {
+      hi: 'रतुआ प्रतिरोधी किस्मों (HD-2967, DBW-187) की बुवाई करें',
+      mr: 'तांबेरा प्रतिकारक वाणांची (HD-2967, DBW-187) पेरणी करावी'
+    },
+    'Foliar spray of bio-sulfur formulation': {
+      hi: 'जैविक सल्फर का पत्तियों पर छिड़काव करें',
+      mr: 'जैविक गंधकाची पानांवर फवारणी करावी'
+    },
+    'Propiconazole 25% EC (1ml/L water) at immediate first symptom': {
+      hi: 'प्रोपीकोनाज़ोल 25% EC (1 मिली/लीटर पानी) का छिड़काव',
+      mr: 'प्रोपीकोनाझोल २५% EC (१ मिली/लिटर पाणी) त्वरित फवारावे'
+    },
+    'Tebuconazole 50% + Trifloxystrobin 25% WG (0.7g/L)': {
+      hi: 'टेबूकोनाज़ोल 50% + ट्राइफ्लॉक्सीस्ट्रोबिन 25% WG (0.7 ग्राम/लीटर)',
+      mr: 'टेब्युकोनाझोल ५०% + ट्रायफ्लॉक्सीस्ट्रोबिन २५% WG (०.७ ग्रॅम/लिटर)'
+    },
+    'Hexaconazole 5% EC (2ml/L water)': {
+      hi: 'हेक्साकोनाज़ोल 5% EC (2 मिली/लीटर पानी)',
+      mr: 'हेक्साकोनाझोल ५% EC (२ मिली/लिटर पाणी) फवारावे'
     }
   };
 
   // Helper to extract localized text or string safely
   const getLocalized = (val) => {
     if (!val) return '';
-
-    // If string, lookup in TRANSLATION_MAP if non-English active
-    if (typeof val === 'string') {
-      if (language !== 'en' && TRANSLATION_MAP[val] && TRANSLATION_MAP[val][language]) {
-        return TRANSLATION_MAP[val][language];
-      }
-      return val;
-    }
 
     // If Array, translate each item
     if (Array.isArray(val)) {
@@ -370,6 +406,70 @@ export const PlantDoctorPage = ({ onSelectDiagnosisForChat, setActiveTab, onOpen
     if (typeof val === 'object') {
       const selected = val[language] || val['en'] || Object.values(val)[0] || '';
       return getLocalized(selected);
+    }
+
+    // If string
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (language === 'en') return trimmed;
+
+      // 1. Direct match in TRANSLATION_MAP
+      if (TRANSLATION_MAP[trimmed] && TRANSLATION_MAP[trimmed][language]) {
+        return TRANSLATION_MAP[trimmed][language];
+      }
+
+      // 2. Substring search match in TRANSLATION_MAP
+      const mapKeys = Object.keys(TRANSLATION_MAP);
+      for (const key of mapKeys) {
+        if (trimmed.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(trimmed.toLowerCase())) {
+          if (TRANSLATION_MAP[key][language]) {
+            return TRANSLATION_MAP[key][language];
+          }
+        }
+      }
+
+      // 3. Smart Translation Fallback for Marathi / Hindi
+      if (language === 'mr') {
+        return trimmed
+          .replace(/Linear rows of bright yellow pustules.*/i, 'पानांच्या शिरांवर पिवळ्या रंगाच्या ओळी (तांबेरा) पडणे')
+          .replace(/Pustules burst open.*/i, 'पिवळ्या बुरशीचे बीजाणू हवेत पसरणे')
+          .replace(/Leaves dry up.*/i, 'पाने पिवळी-तपकिरी होऊन वाळणे व उत्पन्नात मोठी घट होणे')
+          .replace(/Airborne rust fungal spores.*/i, 'हवेद्वारे दूरवर पसरणारे तांबेरा बुरशीचे बीजाणू')
+          .replace(/Cool temperature.*/i, 'थंड हवामान (१०-१५°C) आणि रात्री पडणारे दाट दव')
+          .replace(/Spray sour fermented buttermilk.*/i, 'आंबट ताकाची फवारणी (१० लिटर पाण्यात १ लिटर ताक)')
+          .replace(/Plant rust-resistant.*/i, 'तांबेरा प्रतिकारक वाणांची (HD-2967, DBW-187) पेरणी करावी')
+          .replace(/Foliar spray of bio-sulfur.*/i, 'जैविक गंधकाची पानांवर फवारणी करावी')
+          .replace(/Propiconazole.*/i, 'प्रोपीकोनाझोल २५% EC (१ मिली/लिटर पाणी) फवारावे')
+          .replace(/Tebuconazole.*/i, 'टेब्युकोनाझोल ५०% + ट्रायफ्लॉक्सीस्ट्रोबिन २५% WG (०.७ ग्रॅम/लिटर)')
+          .replace(/Hexaconazole.*/i, 'हेक्साकोनाझोल ५% EC (२ मिली/लिटर पाणी) फवारावे')
+          .replace(/Foliar spray of/gi, 'पानांवर फवारणी करा:')
+          .replace(/Spray/gi, 'फवारणी करा:')
+          .replace(/water/gi, 'पाणी')
+          .replace(/leaves/gi, 'पाने')
+          .replace(/every (\d+) days/gi, 'दर $1 दिवसांनी');
+      }
+
+      if (language === 'hi') {
+        return trimmed
+          .replace(/Linear rows of bright yellow pustules.*/i, 'गेहूं की पत्तियों की शिराओं पर पीले रंग की चमकदार धारियां बनना')
+          .replace(/Pustules burst open.*/i, 'पीले रंग के कवक बीजाणु हवा में उड़ना')
+          .replace(/Leaves dry up.*/i, 'पत्तियां पीली-भूरी होकर सूखना और पैदावार में भारी कमी')
+          .replace(/Airborne rust fungal spores.*/i, 'हवा से फैलने वाले रतुआ कवक बीजाणु')
+          .replace(/Cool temperature.*/i, 'कम तापमान (10-15°C) और रात की ओस')
+          .replace(/Spray sour fermented buttermilk.*/i, 'खट्टी छाछ (ताक) का 10% घोल बनाकर छिड़काव करें')
+          .replace(/Plant rust-resistant.*/i, 'रतुआ प्रतिरोधी किस्मों (HD-2967, DBW-187) की बुवाई करें')
+          .replace(/Foliar spray of bio-sulfur.*/i, 'जैविक सल्फर का पत्तियों पर छिड़काव करें')
+          .replace(/Propiconazole.*/i, 'प्रोपीकोनाज़ोल 25% EC (1 मिली/लीटर पानी) का छिड़काव')
+          .replace(/Tebuconazole.*/i, 'टेबूकोनाज़ोल 50% + ट्राइफ्लॉक्सीस्ट्रोबिन 25% WG (0.7 ग्राम/लीटर)')
+          .replace(/Hexaconazole.*/i, 'हेक्साकोनाज़ोल 5% EC (2 मिली/लीटर पानी)')
+          .replace(/Foliar spray of/gi, 'पत्तियों पर छिड़काव करें:')
+          .replace(/Spray/gi, 'छिड़काव करें:')
+          .replace(/water/gi, 'पानी')
+          .replace(/leaves/gi, 'पत्तियां')
+          .replace(/every (\d+) days/gi, 'हर $1 दिनों में');
+      }
+
+      return val;
     }
 
     return String(val);
