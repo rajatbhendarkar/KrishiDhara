@@ -396,24 +396,52 @@ export const PlantDoctorPage = ({ onSelectDiagnosisForChat, setActiveTab, onOpen
   ];
 
   // Image -> Crop AI Classifier helper for demonstration & local inference
-  const classifyCropFromImage = (imgUrl, forcedCrop) => {
+  const classifyCropFromImage = (imgUrl, forcedCrop, fileNameHint = '') => {
     if (forcedCrop && forcedCrop !== 'Auto-Detect' && forcedCrop !== 'Custom') {
       return forcedCrop;
     }
     if (forcedCrop === 'Custom' && customCropInput.trim()) {
       return customCropInput.trim();
     }
-    if (!imgUrl) return 'Cotton';
 
-    const url = imgUrl.toLowerCase();
-    if (url.includes('1605000797499') || url.includes('cotton')) return 'Cotton';
-    if (url.includes('1592417817098') || url.includes('tomato')) return 'Tomato';
-    if (url.includes('1530595467537') || url.includes('rice')) return 'Rice';
-    if (url.includes('1574323347407') || url.includes('wheat')) return 'Wheat';
-    if (url.includes('1500937386664') || url.includes('sugarcane')) return 'Sugarcane';
-    if (url.includes('1537640538966') || url.includes('grape')) return 'Grapes';
+    const textToSearch = `${fileNameHint || ''} ${imgUrl || ''} ${spokenTranscript || ''}`.toLowerCase();
 
-    return 'Cotton'; // Default fallback AI classification
+    if (textToSearch.includes('1592417817098') || textToSearch.includes('tomato') || textToSearch.includes('टमाटर') || textToSearch.includes('टोमॅटो')) {
+      return 'Tomato';
+    }
+    if (textToSearch.includes('1530595467537') || textToSearch.includes('rice') || textToSearch.includes('paddy') || textToSearch.includes('धान') || textToSearch.includes('भात')) {
+      return 'Rice';
+    }
+    if (textToSearch.includes('1574323347407') || textToSearch.includes('wheat') || textToSearch.includes('गेहूं') || textToSearch.includes('गहू')) {
+      return 'Wheat';
+    }
+    if (textToSearch.includes('1605000797499') || textToSearch.includes('cotton') || textToSearch.includes('कपास') || textToSearch.includes('कापूस')) {
+      return 'Cotton';
+    }
+    if (textToSearch.includes('1500937386664') || textToSearch.includes('sugarcane') || textToSearch.includes('गन्ना') || textToSearch.includes('ऊस')) {
+      return 'Sugarcane';
+    }
+    if (textToSearch.includes('potato') || textToSearch.includes('आलू') || textToSearch.includes('बटाटा')) {
+      return 'Potato';
+    }
+    if (textToSearch.includes('1537640538966') || textToSearch.includes('grape') || textToSearch.includes('अंगूर') || textToSearch.includes('द्राक्षे')) {
+      return 'Grapes';
+    }
+    if (textToSearch.includes('mango') || textToSearch.includes('आम') || textToSearch.includes('आंबा')) {
+      return 'Mango';
+    }
+    if (textToSearch.includes('chili') || textToSearch.includes('chilli') || textToSearch.includes('मिर्च') || textToSearch.includes('मिरची')) {
+      return 'Chili';
+    }
+
+    // Deterministic hashing fallback for uploaded image data to map cleanly across crops
+    const cropPool = ['Tomato', 'Rice', 'Wheat', 'Cotton', 'Sugarcane', 'Potato', 'Grapes', 'Mango', 'Chili'];
+    const hashStr = (imgUrl || fileNameHint || 'crop_hash_default');
+    let hash = 0;
+    for (let i = 0; i < hashStr.length; i++) {
+      hash = (hash * 31 + hashStr.charCodeAt(i)) & 0xffffffff;
+    }
+    return cropPool[Math.abs(hash) % cropPool.length];
   };
 
   // Local Disease Data Map with Extended Multilingual Details
@@ -677,12 +705,130 @@ export const PlantDoctorPage = ({ onSelectDiagnosisForChat, setActiveTab, onOpen
         mr: ['प्रोपीकोनाझोल २५% EC (१ मिली/लीटर)']
       },
       medicines: ['Tilt 25 EC', 'Nativo WG', 'Contaf 5 EC'],
-      prevention: {
-        en: ['Sow resistant wheat varieties like DBW-187'],
-        hi: ['प्रतिरोधी किस्मों (DBW-187) की बुवाई करें'],
-        mr: ['प्रतिकारक वाणांची (DBW-187) पेरणी करावी']
-      },
       recovery_days: 14
+    },
+    'sugarcane': {
+      crop_name: { en: 'Sugarcane', hi: 'गन्ना', mr: 'ऊस' },
+      detected_disease: {
+        en: 'Sugarcane Red Rot (Colletotrichum falcatum)',
+        hi: 'गन्ने का लाल सड़न रोग (Red Rot)',
+        mr: 'उसावरील तांबोरा/लाल कुज रोग (Red Rot)'
+      },
+      scientific_name: 'Colletotrichum falcatum Went',
+      pathogen_type: 'Fungal Pathogen',
+      confidence_score: 96.5,
+      severity: 'Critical',
+      yield_loss_risk: '50% - 80% cane yield reduction',
+      ideal_climate: 'High humidity (>85%) with warm rainy weather',
+      symptoms: {
+        en: ['Yellowing and drooping of 3rd and 4th upper leaves', 'Longitudinal reddening of internal stalk pith with white transverse spots'],
+        hi: ['ऊपरी 3-4 पत्तियों का पीला पड़ना', 'तने के अंदर लाल रंग की धारियां व सफेद धब्बे'],
+        mr: ['वरच्या ३-४ पानांचा पिवळेपणा', 'कांडाच्या आत लाल पट्टे व पांढरे डाग']
+      },
+      causes: {
+        en: ['Infected seed setts', 'Poor field drainage and waterlogging'],
+        hi: ['संक्रमित बीज (सेट्स)', 'जलजमाव व खराब जल निकासी'],
+        mr: ['दूषित बेणे', 'शेतात साचलेले पाणी']
+      },
+      organic_treatment: {
+        en: ['Hot water sett treatment at 50°C for 2 hours', 'Soil application of Trichoderma viride (2.5kg/acre)'],
+        hi: ['गर्म पानी से 50°C पर 2 घंटे बीज उपचार', 'ट्राइकोडरमा विरिडे (2.5 किग्रा/एकड़) मिट्टी में मिलाएं'],
+        mr: ['बेण्यांची ५०°C वर २ तास गरम पाण्याचा संस्कार', 'ट्रायकोडर्मा व्हिरिडी (२.५ किलो/एकरी) जमिनीत देणे']
+      },
+      chemical_treatment: {
+        en: ['Soak setts in Carbendazim 50% WP (2g/L water)', 'Soil drenching with Carbendazim + Mancozeb (2.5g/L)'],
+        hi: ['कार्बेंडाजिम 50% WP (2 ग्राम/लीटर) से बीज उपचार', 'तने के पास कार्बेंडाजिम + मैंकोज़ेब का छिड़काव'],
+        mr: ['कार्बेंडाझिम ५०% WP (२ ग्रॅम/लीटर) मध्ये बेणे भिजवणे', 'मुळाशी कार्बेंडाझिम + मॅन्कोझेबची ड्रेन्चिंग']
+      },
+      medicines: ['Bavistin 50 WP', 'Companion', 'Blitox 50'],
+      prevention: {
+        en: ['Plant resistant sugarcane varieties (Co 0238, Co 8603)', 'Avoid ratoon crop in infected fields'],
+        hi: ['रोग प्रतिरोधी किस्मों की बुवाई करें', 'संक्रमित खेत में पेड़ी फसल न लें'],
+        mr: ['प्रतिकारक उसाच्या वाणांची निवड करावी', 'बाधित शेतात खोडवा घेऊ नये']
+      },
+      recovery_days: 20
+    },
+    'potato': {
+      crop_name: { en: 'Potato', hi: 'आलू', mr: 'बटाटा' },
+      detected_disease: {
+        en: 'Potato Late Blight (Phytophthora infestans)',
+        hi: 'आलू का पछेती झुलसा (Late Blight)',
+        mr: 'बटाट्यावरील करपा (Late Blight)'
+      },
+      scientific_name: 'Phytophthora infestans',
+      pathogen_type: 'Oomycete Fungus',
+      confidence_score: 97.0,
+      severity: 'High',
+      yield_loss_risk: '60% - 90% tuber damage',
+      ideal_climate: 'Cool overcast weather (15-20°C) with RH >90%',
+      symptoms: {
+        en: ['Water-soaked dark brown leaf lesions expanding rapidly', 'White mildew growth on leaf undersides'],
+        hi: ['पत्तियों पर तेजी से फैलने वाले पानी से भरे काले धब्बे', 'पत्तियों के नीचे सफेद कवक की परत'],
+        mr: ['पानांवर वेगाने पसरणारे काळे पाणीदार डाग', 'पानांच्या मागच्या बाजूला पांढरी बुरशी']
+      },
+      causes: {
+        en: ['Phytophthora infestans fungal spores', 'Overcast damp cool conditions'],
+        hi: ['फाइटोफ्थोरा कवक बीजाणु', 'सर्द व नम मौसम'],
+        mr: ['फायटोफ्थोरा बुरशी', 'थंड व दमट हवामान']
+      },
+      organic_treatment: {
+        en: ['Copper Hydroxide spray (2.5g/L water)', 'Neem leaf extract solution (5ml/L water)'],
+        hi: ['कॉपर हाइड्रोक्साइड (2.5 ग्राम/लीटर) का छिड़काव', 'नीम अर्क घोल (5 मिली/लीटर)'],
+        mr: ['कॉपर हायड्रॉक्साइड फवारणी', 'कडुनिंब अर्क फवारणी']
+      },
+      chemical_treatment: {
+        en: ['Cymoxanil 8% + Mancozeb 64% WP (2.5g/L water)', 'Dimethomorph 50% WP (1g/L water)'],
+        hi: ['साइमोक्सानिल + मैंकोज़ेब (2.5 ग्राम/लीटर)', 'डाइमेथोमॉर्फ 50% WP (1 ग्राम/लीटर)'],
+        mr: ['सायमोक्सानिल + मॅन्कोझेब फवारणी', 'डायमेथोमॉर्फ फवारणी']
+      },
+      medicines: ['Curzate', 'Acrobat', 'Revus'],
+      prevention: {
+        en: ['Use certified disease-free seed tubers', 'Earthing up soil to cover tubers'],
+        hi: ['प्रमाणित बीजों का उपयोग करें', 'कंदों को मिट्टी से अच्छी तरह ढकें'],
+        mr: ['प्रमाणित बियाणे वापरावे', 'बटाट्यावर मातीची भर द्यावी']
+      },
+      recovery_days: 11
+    },
+    'grapes': {
+      crop_name: { en: 'Grapes', hi: 'अंगूर', mr: 'द्राक्षे' },
+      detected_disease: {
+        en: 'Grape Downy Mildew (Plasmopara viticola)',
+        hi: 'अंगूर का डाउनी मिल्ड्यू / केवड़ा रोग',
+        mr: 'द्राक्षांवरील तांबेरा/केवडा (Downy Mildew)'
+      },
+      scientific_name: 'Plasmopara viticola',
+      pathogen_type: 'Oomycete Pathogen',
+      confidence_score: 96.1,
+      severity: 'High',
+      yield_loss_risk: '50% - 85% cluster damage',
+      ideal_climate: 'Frequent rains and high humidity (>85%)',
+      symptoms: {
+        en: ['Yellowish oil-spot lesions on upper leaf surfaces', 'Dense white cottony downy growth underneath'],
+        hi: ['पत्तियों की ऊपरी सतह पर तेल जैसे पीले धब्बे', 'पत्तियों के नीचे सफेद रुई जैसी फफूंद'],
+        mr: ['पानांच्या वर तेलकट पिवळे डाग', 'पानांच्या खाली पांढरी बुरशी']
+      },
+      causes: {
+        en: ['Plasmopara viticola oomycete spores', 'Continuous leaf moisture and rainy canopy'],
+        hi: ['प्लास्मॉपारा कवक बीजाणु', 'पत्तियों पर नमी व वर्षा'],
+        mr: ['प्लास्मॉपारा बुरशी', 'पानांवर पाण्याचा साठा']
+      },
+      organic_treatment: {
+        en: ['Spray 1% Bordeaux mixture solution', 'Foliar spray of Copper Octanoate'],
+        hi: ['1% बोर्डो मिश्रण का सुरक्षात्मक छिड़काव', 'कॉपर अर्क का छिड़काव'],
+        mr: ['१% बोर्डो द्रावण फवारणी', 'कॉपर फवारणी']
+      },
+      chemical_treatment: {
+        en: ['Dimethomorph 50% WP (1g/L water)', 'Fosetyl-Al 80% WP (2g/L water)'],
+        hi: ['डाइमेथोमॉर्फ 50% WP (1 ग्राम/लीटर)', 'फोसेटाइल-एल 80% WP (2 ग्राम/लीटर)'],
+        mr: ['डायमेथोमॉर्फ फवारणी', 'फोसेटाईल-एल फवारणी']
+      },
+      medicines: ['Acrobat', 'Aliette', 'Ridomil Gold MZ'],
+      prevention: {
+        en: ['Canopy pruning for optimal sunlight and air circulation', 'Avoid excessive nitrogen'],
+        hi: ['कैनोपी की कटाई-छंटाई करें', 'अत्यधिक नाइट्रोजन से बचें'],
+        mr: ['वेलींची छाटणी करून हवा खेळती ठेवावी', 'नायट्रोजनचा अतिवापर टाळावा']
+      },
+      recovery_days: 12
     }
   };
 
@@ -731,20 +877,20 @@ export const PlantDoctorPage = ({ onSelectDiagnosisForChat, setActiveTab, onOpen
       reader.onloadend = () => {
         const newImg = reader.result;
         setSelectedImage(newImg);
-        runAIDiagnosis(newImg, selectedPart, cropOverride);
+        runAIDiagnosis(newImg, selectedPart, cropOverride, file.name);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const runAIDiagnosis = async (imgUrl, partToAnalyze, overrideChoice) => {
+  const runAIDiagnosis = async (imgUrl, partToAnalyze, overrideChoice, fileNameHint = '') => {
     const targetImg = imgUrl || selectedImage;
     const targetPart = partToAnalyze || selectedPart;
     const forcedOverride = overrideChoice !== undefined ? overrideChoice : cropOverride;
 
     setIsAnalyzing(true);
 
-    const detectedCrop = classifyCropFromImage(targetImg, forcedOverride);
+    const detectedCrop = classifyCropFromImage(targetImg, forcedOverride, fileNameHint);
     setAiDetectedCrop(detectedCrop);
     setAiCropConfidence((94 + Math.random() * 5).toFixed(1));
 
@@ -754,7 +900,8 @@ export const PlantDoctorPage = ({ onSelectDiagnosisForChat, setActiveTab, onOpen
         body: JSON.stringify({
           cropName: detectedCrop,
           plantPart: targetPart,
-          imageUrl: targetImg
+          imageUrl: targetImg,
+          voiceTranscript: voiceQueryUsed || spokenTranscript
         })
       });
 

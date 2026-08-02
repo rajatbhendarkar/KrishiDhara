@@ -426,30 +426,73 @@ const mockDiagnosesHistory = [
 
 exports.detectDisease = async (req, res, next) => {
   try {
-    const { cropName = 'Tomato', plantPart = 'Leaf', voiceTranscript, imageUrl } = req.body;
+    const { cropName, plantPart = 'Leaf', voiceTranscript, imageUrl } = req.body;
 
     const keys = Object.keys(DISEASE_DATABASE);
     let selectedKey = null;
+    let resolvedCropName = cropName;
 
-    // Search by cropName matching
-    if (cropName) {
+    const isAutoDetect = !cropName || cropName === 'Auto-Detect' || cropName === 'Auto-Detect Crop';
+
+    if (!isAutoDetect && cropName && cropName !== 'Custom') {
       const matches = keys.filter(k => DISEASE_DATABASE[k].crop.toLowerCase().includes(cropName.toLowerCase()));
       if (matches.length > 0) {
-        selectedKey = matches[Math.floor(Math.random() * matches.length)];
+        selectedKey = matches[0];
       }
     }
 
+    // Auto-detect resolution logic if crop is Auto-Detect or not matched
     if (!selectedKey) {
-      // Pick random default
-      selectedKey = keys[Math.floor(Math.random() * keys.length)];
+      const textToSearch = `${imageUrl || ''} ${voiceTranscript || ''} ${cropName || ''}`.toLowerCase();
+
+      if (textToSearch.includes('1592417817098') || textToSearch.includes('tomato') || textToSearch.includes('टमाटर') || textToSearch.includes('टोमॅटो')) {
+        selectedKey = 'tomato_late_blight';
+      } else if (textToSearch.includes('1530595467537') || textToSearch.includes('rice') || textToSearch.includes('paddy') || textToSearch.includes('धान') || textToSearch.includes('भात')) {
+        selectedKey = 'rice_blast';
+      } else if (textToSearch.includes('1574323347407') || textToSearch.includes('wheat') || textToSearch.includes('गेहूं') || textToSearch.includes('गहू')) {
+        selectedKey = 'wheat_rust';
+      } else if (textToSearch.includes('1605000797499') || textToSearch.includes('cotton') || textToSearch.includes('कपास') || textToSearch.includes('कापूस')) {
+        selectedKey = 'cotton_leaf_curl';
+      } else if (textToSearch.includes('1500937386664') || textToSearch.includes('sugarcane') || textToSearch.includes('गन्ना') || textToSearch.includes('ऊस')) {
+        selectedKey = 'sugarcane_red_rot';
+      } else if (textToSearch.includes('potato') || textToSearch.includes('आलू') || textToSearch.includes('बटाटा')) {
+        selectedKey = 'potato_late_blight';
+      } else if (textToSearch.includes('1537640538966') || textToSearch.includes('grape') || textToSearch.includes('अंगूर') || textToSearch.includes('द्राक्षे')) {
+        selectedKey = 'grape_downy_mildew';
+      } else if (textToSearch.includes('mango') || textToSearch.includes('आम') || textToSearch.includes('आंबा')) {
+        selectedKey = 'mango_anthracnose';
+      } else if (textToSearch.includes('chili') || textToSearch.includes('chilli') || textToSearch.includes('मिर्च') || textToSearch.includes('मिरची')) {
+        selectedKey = 'chili_leaf_curl';
+      } else {
+        // Compute deterministic hash of imageUrl content if base64/custom uploaded image
+        const cropCandidates = [
+          'tomato_late_blight',
+          'rice_blast',
+          'wheat_rust',
+          'cotton_leaf_curl',
+          'sugarcane_red_rot',
+          'potato_late_blight',
+          'grape_downy_mildew',
+          'mango_anthracnose',
+          'chili_leaf_curl'
+        ];
+        const hashStr = imageUrl || 'default_crop_hash';
+        let hash = 0;
+        for (let i = 0; i < hashStr.length; i++) {
+          hash = (hash * 31 + hashStr.charCodeAt(i)) & 0xffffffff;
+        }
+        const index = Math.abs(hash) % cropCandidates.length;
+        selectedKey = cropCandidates[index];
+      }
     }
 
     const diseaseData = DISEASE_DATABASE[selectedKey];
-    
+    resolvedCropName = diseaseData.crop;
+
     const newRecord = {
       id: `diag-${Date.now()}`,
       farmer_name: req.user?.name || 'Ramesh Patel',
-      crop_name: cropName || diseaseData.crop,
+      crop_name: resolvedCropName,
       detected_disease: diseaseData.disease,
       confidence_score: diseaseData.confidence,
       severity: diseaseData.severity,
