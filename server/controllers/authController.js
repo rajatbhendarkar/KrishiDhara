@@ -27,6 +27,10 @@ exports.register = async (req, res, next) => {
     const cleanEmail = email.trim().toLowerCase();
     const existingUser = userStore.getUserByEmail(cleanEmail);
 
+    if (existingUser && existingUser.password_hash) {
+      return res.status(400).json({ success: false, message: 'An account with this email address already exists. Please sign in instead.' });
+    }
+
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -41,7 +45,7 @@ exports.register = async (req, res, next) => {
       role: existingUser?.role || role,
       language: existingUser?.language || language,
       phone: phone || existingUser?.phone || '',
-      is_verified: true, // Mark verified on registration
+      is_verified: true,
       otp_code: otp
     };
 
@@ -49,13 +53,12 @@ exports.register = async (req, res, next) => {
 
     // Send OTP via Gmail
     const mailResult = await sendOTPEmail(savedUser.email, otp, savedUser.name);
-
     const token = generateToken(savedUser);
 
     res.status(201).json({
       success: true,
       message: mailResult?.simulated 
-        ? `Registration successful! Account saved permanently.` 
+        ? `Registration successful! Account created.` 
         : `Registration successful! Real OTP sent to your Gmail: ${savedUser.email}.`,
       user: savedUser,
       token,
@@ -75,24 +78,18 @@ exports.sendOTP = async (req, res, next) => {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
     let user = userStore.getUserByEmail(cleanEmail);
+
     if (!user) {
-      user = {
-        id: `usr-${Date.now()}`,
-        farmerId: `FRM-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-        name: cleanEmail.split('@')[0],
-        email: cleanEmail,
-        password_hash: null,
-        role: 'farmer',
-        is_verified: true,
-        otp_code: otp
-      };
-    } else {
-      user.otp_code = otp;
+      return res.status(404).json({
+        success: false,
+        notRegistered: true,
+        message: 'Account not found for this email address. Please register / create an account first.'
+      });
     }
 
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.otp_code = otp;
     const savedUser = await userStore.saveUser(user);
 
     // Send OTP via Gmail API / Nodemailer
@@ -102,7 +99,7 @@ exports.sendOTP = async (req, res, next) => {
       success: true,
       message: mailResult?.simulated 
         ? `OTP generated (Demo Mode).` 
-        : `Real OTP sent successfully to ${cleanEmail}. Please check your Gmail inbox (and Spam folder).`,
+        : `Real OTP sent successfully to ${cleanEmail}. Please check your Gmail inbox.`,
       simulated: mailResult?.simulated || false,
       ...(mailResult?.simulated ? { otp_preview: otp } : {})
     });
@@ -122,27 +119,19 @@ exports.login = async (req, res, next) => {
     let user = userStore.getUserByEmail(cleanEmail);
 
     if (!user) {
-      // Auto-provision account with password if logging in for the first time
-      const salt = await bcrypt.genSalt(10);
-      const password_hash = await bcrypt.hash(password, salt);
-      const newUserObj = {
-        id: `usr-${Date.now()}`,
-        farmerId: `FRM-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-        name: cleanEmail.split('@')[0].toUpperCase(),
-        email: cleanEmail,
-        password_hash,
-        role: 'farmer',
-        is_verified: true
-      };
-      user = await userStore.saveUser(newUserObj);
-    } else if (user.password_hash) {
-      // Verify existing password
+      return res.status(404).json({
+        success: false,
+        notRegistered: true,
+        message: 'Account not found for this email address. Please register / create an account first.'
+      });
+    }
+
+    if (user.password_hash) {
       const isPasswordValid = await bcrypt.compare(password, user.password_hash);
       if (!isPasswordValid) {
-        return res.status(401).json({ success: false, message: 'Incorrect password. Please check your password or use Gmail OTP login.' });
+        return res.status(401).json({ success: false, message: 'Incorrect password. Please check your password or sign in using Gmail OTP.' });
       }
     } else {
-      // Set & save password for user who previously logged in via OTP
       const salt = await bcrypt.genSalt(10);
       user.password_hash = await bcrypt.hash(password, salt);
       user.is_verified = true;
@@ -168,19 +157,14 @@ exports.verifyOTP = async (req, res, next) => {
     let user = userStore.getUserByEmail(cleanEmail);
 
     if (!user) {
-      user = {
-        id: `usr-${Date.now()}`,
-        farmerId: `FRM-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-        name: cleanEmail.split('@')[0].toUpperCase(),
-        email: cleanEmail,
-        role: 'farmer',
-        is_verified: true,
-        otp_code: otp
-      };
-    } else {
-      user.is_verified = true;
+      return res.status(404).json({
+        success: false,
+        notRegistered: true,
+        message: 'Account not found for this email address. Please register / create an account first.'
+      });
     }
 
+    user.is_verified = true;
     const savedUser = await userStore.saveUser(user);
     const token = generateToken(savedUser);
 
@@ -207,20 +191,14 @@ exports.forgotPassword = async (req, res, next) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     if (!user) {
-      user = {
-        id: `usr-${Date.now()}`,
-        farmerId: `FRM-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-        name: cleanEmail.split('@')[0],
-        email: cleanEmail,
-        password_hash: null,
-        role: 'farmer',
-        is_verified: true,
-        otp_code: otp
-      };
-    } else {
-      user.otp_code = otp;
+      return res.status(404).json({
+        success: false,
+        notRegistered: true,
+        message: 'No registered account found with this email address. Please register an account first.'
+      });
     }
 
+    user.otp_code = otp;
     await userStore.saveUser(user);
 
     const mailResult = await sendOTPEmail(cleanEmail, otp, user?.name || 'Farmer');

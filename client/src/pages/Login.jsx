@@ -274,8 +274,17 @@ export const Login = ({ setActiveTab, onLoginSuccess }) => {
           </div>
         )}
         {errorMsg && (
-          <div className="bg-rose-50 dark:bg-rose-950/60 p-3 rounded-2xl border border-rose-200 dark:border-rose-700 text-xs text-rose-800 dark:text-rose-300">
-            {errorMsg}
+          <div className="bg-rose-50 dark:bg-rose-950/60 p-3.5 rounded-2xl border border-rose-200 dark:border-rose-700 text-xs text-rose-800 dark:text-rose-300 space-y-2">
+            <p>{errorMsg}</p>
+            {(errorMsg.toLowerCase().includes('not found') || errorMsg.toLowerCase().includes('register')) && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('register')}
+                className="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer"
+              >
+                📝 Register New Farmer Account Now
+              </button>
+            )}
           </div>
         )}
 
