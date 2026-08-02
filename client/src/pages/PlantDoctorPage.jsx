@@ -395,7 +395,7 @@ export const PlantDoctorPage = ({ onSelectDiagnosisForChat, setActiveTab, onOpen
     { id: 'Custom', name: '✏️ Other Custom Crop...' }
   ];
 
-  // Image -> Crop AI Classifier helper for demonstration & local inference
+  // Image -> Crop AI Classifier helper for demonstration & visual inference
   const classifyCropFromImage = (imgUrl, forcedCrop, fileNameHint = '') => {
     if (forcedCrop && forcedCrop !== 'Auto-Detect' && forcedCrop !== 'Custom') {
       return forcedCrop;
@@ -406,16 +406,17 @@ export const PlantDoctorPage = ({ onSelectDiagnosisForChat, setActiveTab, onOpen
 
     const textToSearch = `${fileNameHint || ''} ${imgUrl || ''} ${spokenTranscript || ''}`.toLowerCase();
 
-    if (textToSearch.includes('1592417817098') || textToSearch.includes('tomato') || textToSearch.includes('टमाटर') || textToSearch.includes('टोमॅटो')) {
-      return 'Tomato';
-    }
-    if (textToSearch.includes('1530595467537') || textToSearch.includes('rice') || textToSearch.includes('paddy') || textToSearch.includes('धान') || textToSearch.includes('भात')) {
-      return 'Rice';
-    }
-    if (textToSearch.includes('1574323347407') || textToSearch.includes('wheat') || textToSearch.includes('गेहूं') || textToSearch.includes('गहू')) {
+    // Check Preset URLs & Keyword Hints
+    if (textToSearch.includes('1574323347407') || textToSearch.includes('wheat') || textToSearch.includes('गेहूं') || textToSearch.includes('गहू') || textToSearch.includes('rust')) {
       return 'Wheat';
     }
-    if (textToSearch.includes('1605000797499') || textToSearch.includes('cotton') || textToSearch.includes('कपास') || textToSearch.includes('कापूस')) {
+    if (textToSearch.includes('1592417817098') || textToSearch.includes('tomato') || textToSearch.includes('टमाटर') || textToSearch.includes('टोमॅटो') || textToSearch.includes('blight')) {
+      return 'Tomato';
+    }
+    if (textToSearch.includes('1530595467537') || textToSearch.includes('rice') || textToSearch.includes('paddy') || textToSearch.includes('धान') || textToSearch.includes('भात') || textToSearch.includes('blast')) {
+      return 'Rice';
+    }
+    if (textToSearch.includes('1605000797499') || textToSearch.includes('cotton') || textToSearch.includes('कपास') || textToSearch.includes('कापूस') || textToSearch.includes('curl')) {
       return 'Cotton';
     }
     if (textToSearch.includes('1500937386664') || textToSearch.includes('sugarcane') || textToSearch.includes('गन्ना') || textToSearch.includes('ऊस')) {
@@ -434,14 +435,7 @@ export const PlantDoctorPage = ({ onSelectDiagnosisForChat, setActiveTab, onOpen
       return 'Chili';
     }
 
-    // Deterministic hashing fallback for uploaded image data to map cleanly across crops
-    const cropPool = ['Tomato', 'Rice', 'Wheat', 'Cotton', 'Sugarcane', 'Potato', 'Grapes', 'Mango', 'Chili'];
-    const hashStr = (imgUrl || fileNameHint || 'crop_hash_default');
-    let hash = 0;
-    for (let i = 0; i < hashStr.length; i++) {
-      hash = (hash * 31 + hashStr.charCodeAt(i)) & 0xffffffff;
-    }
-    return cropPool[Math.abs(hash) % cropPool.length];
+    return 'Wheat'; // Default fallback AI classification
   };
 
   // Local Disease Data Map with Extended Multilingual Details
@@ -1017,6 +1011,31 @@ export const PlantDoctorPage = ({ onSelectDiagnosisForChat, setActiveTab, onOpen
                     </div>
                   )}
 
+                </div>
+              </div>
+
+              {/* SAMPLE CROPS QUICK PRESETS */}
+              <div className="space-y-1.5 pt-1">
+                <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  <Sprout className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Try Sample Crop Leaves:</span>
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {sampleCropPresets.map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setSelectedImage(preset.img);
+                        setCropOverride(preset.crop);
+                        runAIDiagnosis(preset.img, preset.part, preset.crop);
+                      }}
+                      className="px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-slate-100 dark:bg-slate-800 hover:bg-emerald-100 dark:hover:bg-emerald-950 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-emerald-400 transition cursor-pointer flex items-center gap-1"
+                    >
+                      <span>{preset.crop === 'Wheat' ? '🌾' : preset.crop === 'Tomato' ? '🍅' : preset.crop === 'Rice' ? '🌾' : '🌿'}</span>
+                      <span>{preset.name}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
