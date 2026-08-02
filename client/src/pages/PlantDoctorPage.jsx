@@ -567,16 +567,27 @@ export const PlantDoctorPage = ({ onSelectDiagnosisForChat, setActiveTab, onOpen
       return 'Turmeric';
     }
 
-    // Dynamic Filename Extract for ANY custom crop photo uploaded by user
+    // Dynamic Filename Extract for ANY custom crop photo uploaded by user (ignoring camera/random hashes)
     if (fileNameHint) {
-      const cleanName = fileNameHint
-        .replace(/\.[^/.]+$/, '')
-        .replace(/[-_0-9]+/g, ' ')
-        .replace(/leaf|disease|plant|photo|image|img|pic|scan|sample/gi, '')
-        .trim();
+      const isCameraOrRandomHash = (str) => {
+        if (!str) return true;
+        const lower = str.toLowerCase();
+        if (/^(img|dsc|dcim|pxl|screenshot|photo|image|pic|upload|file|document|select|download|istock|adobe|shutterstock)/i.test(lower)) return true;
+        if (/[A-Z]{2,}[a-z]{3,}[A-Z]{2,}/.test(str) || /[a-z]{4,}[A-Z]{4,}/.test(str)) return true;
+        if (str.split(/[-_]/).length > 2 && !/rice|wheat|maize|cotton|tomato|paddy|crop/i.test(lower)) return true;
+        return false;
+      };
 
-      if (cleanName.length >= 3) {
-        return cleanName.replace(/\b\w/g, l => l.toUpperCase());
+      if (!isCameraOrRandomHash(fileNameHint)) {
+        const cleanName = fileNameHint
+          .replace(/\.[^/.]+$/, '')
+          .replace(/[-_0-9]+/g, ' ')
+          .replace(/leaf|disease|plant|photo|image|img|pic|scan|sample/gi, '')
+          .trim();
+
+        if (cleanName.length >= 3) {
+          return cleanName.replace(/\b\w/g, l => l.toUpperCase());
+        }
       }
     }
 

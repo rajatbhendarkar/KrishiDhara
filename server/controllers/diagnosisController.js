@@ -462,9 +462,17 @@ exports.detectDisease = async (req, res, next) => {
 
     const keys = Object.keys(DISEASE_DATABASE);
     let selectedKey = null;
-    let resolvedCropName = cropName;
+    const isCameraOrRandomHash = (str) => {
+      if (!str) return true;
+      const lower = str.toLowerCase();
+      if (/^(img|dsc|dcim|pxl|screenshot|photo|image|pic|upload|file|document|select|download|istock|adobe|shutterstock)/i.test(lower)) return true;
+      if (/[A-Z]{2,}[a-z]{3,}[A-Z]{2,}/.test(str) || /[a-z]{4,}[A-Z]{4,}/.test(str)) return true;
+      if (str.split(/[-_]/).length > 2 && !/rice|wheat|maize|cotton|tomato|paddy|crop/i.test(lower)) return true;
+      return false;
+    };
 
-    const isAutoDetect = !cropName || cropName === 'Auto-Detect' || cropName === 'Auto-Detect Crop';
+    let resolvedCropName = cropName;
+    const isAutoDetect = !cropName || cropName === 'Auto-Detect' || cropName === 'Auto-Detect Crop' || cropName === 'Crop' || isCameraOrRandomHash(cropName);
 
     if (!isAutoDetect && cropName && cropName !== 'Custom') {
       const matches = keys.filter(k => DISEASE_DATABASE[k].crop.toLowerCase().includes(cropName.toLowerCase()));
