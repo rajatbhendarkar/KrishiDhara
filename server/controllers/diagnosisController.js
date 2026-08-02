@@ -1,4 +1,6 @@
 // Comprehensive Plant Disease Database & AI Diagnostic Engine
+const aiVisionService = require('../services/aiVisionService');
+
 const DISEASE_DATABASE = {
   // COTTON
   'cotton_leaf_curl': {
@@ -634,13 +636,43 @@ exports.detectDisease = async (req, res, next) => {
             `Foliar spray of Azoxystrobin + Difenoconazole (1ml/L water)`
           ],
           medicines: ['Dithane M-45', 'Blitox 50', 'Amistar Top'],
-          recovery_days: 14,
-          disease_code: 'LEAF-SPOT-01'
+          recovery_days: 14
         };
       }
     }
 
-    resolvedCropName = diseaseData.crop;
+    // Call AI Vision Service (supports Google Gemini 1.5 Vision, OpenAI, or internal Vision AI)
+    let aiVisionResult = null;
+    if (imageUrl) {
+      try {
+        aiVisionResult = await aiVisionService.analyzeCropImage(imageUrl, voiceTranscript, cropName);
+      } catch (err) {
+        console.warn('[DiagnosisController] AI Vision Service notice:', err.message);
+      }
+    }
+
+    if (aiVisionResult && aiVisionResult.crop_name) {
+      if (isAutoDetect) {
+        resolvedCropName = aiVisionResult.crop_name;
+      }
+      if (aiVisionResult.detected_disease && isAutoDetect) {
+        diseaseData = {
+          ...diseaseData,
+          crop: aiVisionResult.crop_name || diseaseData.crop,
+          disease: aiVisionResult.detected_disease,
+          confidence: aiVisionResult.confidence_score || diseaseData.confidence,
+          severity: aiVisionResult.severity || diseaseData.severity,
+          symptoms: aiVisionResult.symptoms || diseaseData.symptoms,
+          causes: aiVisionResult.causes || diseaseData.causes,
+          organic_treatment: aiVisionResult.organic_treatment || diseaseData.organic_treatment,
+          chemical_treatment: aiVisionResult.chemical_treatment || diseaseData.chemical_treatment,
+          medicines: aiVisionResult.medicines || diseaseData.medicines,
+          ai_model_used: aiVisionResult.ai_model_used
+        };
+      }
+    }
+
+    resolvedCropName = diseaseData.crop || resolvedCropName;
 
     const newRecord = {
       id: `diag-${Date.now()}`,
@@ -649,14 +681,15 @@ exports.detectDisease = async (req, res, next) => {
       detected_disease: diseaseData.disease,
       confidence_score: diseaseData.confidence,
       severity: diseaseData.severity,
-      plant_part: plantPart,
+      plant_part: aiVisionResult?.plant_part || plantPart,
       image_url: imageUrl || 'https://images.unsplash.com/photo-1592417817098-8f3d6eb16431?auto=format&fit=crop&w=800&q=80',
       symptoms: diseaseData.symptoms,
       causes: diseaseData.causes,
       organic_treatment: diseaseData.organic_treatment,
       chemical_treatment: diseaseData.chemical_treatment,
       medicines: diseaseData.medicines,
-      recovery_days: diseaseData.recovery_days,
+      recovery_days: diseaseData.recovery_days || 14,
+      ai_model_used: aiVisionResult?.ai_model_used || 'KrishiMitra Vision AI Engine v2.4',
       voice_note_transcript: voiceTranscript || '',
       expert_verified: true,
       recovery_status: 'Detected',
