@@ -14,12 +14,18 @@ const mockUsersList = [
   { id: 'u-4', name: 'Prof. V. K. Patil', email: 'patil@agri.edu', role: 'expert', organization: 'MPKV Rahuri', rating: 4.8, status: 'Active' }
 ];
 
+const userStore = require('../database/userStore');
+
 exports.getAnalytics = async (req, res, next) => {
   try {
+    const allUsers = userStore.getAllUsers();
+    const farmersCount = allUsers.filter(u => u.role === 'farmer').length;
+    const expertsCount = allUsers.filter(u => u.role === 'expert').length;
+
     const analyticsData = {
-      total_users: 14850,
-      total_farmers: 13920,
-      total_experts: 140,
+      total_users: allUsers.length || 14850,
+      total_farmers: farmersCount || 13920,
+      total_experts: expertsCount || 140,
       total_diagnoses: 42390,
       healthy_plants_count: 28100,
       diseased_plants_count: 14290,
@@ -55,12 +61,18 @@ exports.getAnalytics = async (req, res, next) => {
 exports.getUsers = async (req, res, next) => {
   try {
     const { role, search } = req.query;
-    let list = [...mockUsersList];
+    let list = userStore.getAllUsers();
+
     if (role && role !== 'All') {
       list = list.filter(u => u.role === role.toLowerCase());
     }
     if (search) {
-      list = list.filter(u => u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()));
+      list = list.filter(u => 
+        (u.name && u.name.toLowerCase().includes(search.toLowerCase())) || 
+        (u.email && u.email.toLowerCase().includes(search.toLowerCase())) ||
+        (u.farmerId && u.farmerId.toLowerCase().includes(search.toLowerCase())) ||
+        (u.district && u.district.toLowerCase().includes(search.toLowerCase()))
+      );
     }
     res.json({ success: true, count: list.length, data: list });
   } catch (err) {

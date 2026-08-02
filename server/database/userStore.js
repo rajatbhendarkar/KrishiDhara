@@ -191,14 +191,15 @@ const saveUserToMySQL = async (userObj) => {
   try {
     const formatted = formatUser(userObj);
     const emailLower = formatted.email.toLowerCase();
-
-    // 1. Ensure MySQL tables exist
     await db.query(`
       CREATE TABLE IF NOT EXISTS users (
         id VARCHAR(64) PRIMARY KEY,
+        farmer_id VARCHAR(64),
         name VARCHAR(100) NOT NULL,
         email VARCHAR(150) UNIQUE NOT NULL,
         phone VARCHAR(20),
+        gender VARCHAR(20),
+        dob VARCHAR(20),
         password_hash VARCHAR(255),
         role VARCHAR(20) DEFAULT 'farmer',
         language VARCHAR(10) DEFAULT 'hi',
@@ -208,55 +209,106 @@ const saveUserToMySQL = async (userObj) => {
       )
     `);
 
-    try {
-      await db.query(`ALTER TABLE users ADD COLUMN photo LONGTEXT`);
-    } catch (e) {
-      // Column already exists or table setup complete
+    // Ensure user table column migration
+    const userCols = ['farmer_id', 'gender', 'dob', 'photo'];
+    for (const col of userCols) {
+      try {
+        await db.query(`ALTER TABLE users ADD COLUMN ${col} LONGTEXT`);
+      } catch (e) {}
     }
 
     await db.query(`
       CREATE TABLE IF NOT EXISTS farmers (
         id VARCHAR(64) PRIMARY KEY,
         user_id VARCHAR(64) UNIQUE,
-        farm_size_acres DECIMAL(10, 2),
-        primary_crops TEXT,
-        soil_type VARCHAR(50),
-        district VARCHAR(100),
+        farmer_id VARCHAR(64),
+        name VARCHAR(100),
+        email VARCHAR(150),
+        phone VARCHAR(20),
+        gender VARCHAR(20),
+        dob VARCHAR(20),
         state VARCHAR(100),
+        district VARCHAR(100),
+        taluka VARCHAR(100),
+        village VARCHAR(100),
         pincode VARCHAR(10),
+        farm_size_acres DECIMAL(10, 2),
+        land_unit VARCHAR(20),
+        farm_plots INT,
+        soil_type VARCHAR(50),
+        irrigation_source TEXT,
+        water_availability VARCHAR(50),
+        primary_crops TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Ensure farmers table column migration
+    const farmerCols = [
+      'farmer_id VARCHAR(64)', 'name VARCHAR(100)', 'email VARCHAR(150)', 'phone VARCHAR(20)',
+      'gender VARCHAR(20)', 'dob VARCHAR(20)', 'taluka VARCHAR(100)', 'village VARCHAR(100)',
+      'land_unit VARCHAR(20)', 'farm_plots INT', 'irrigation_source TEXT', 'water_availability VARCHAR(50)'
+    ];
+    for (const colDef of farmerCols) {
+      try {
+        await db.query(`ALTER TABLE farmers ADD COLUMN ${colDef}`);
+      } catch (e) {}
+    }
 
     const passHash = formatted.password_hash || '$2a$10$wT8K4S.kXk1Xf8uV2N7x3.S5C6t5V6W7X8Y9Z0a1b2c3d4e5f6';
 
     // 2. Upsert into MySQL users table (including profile photo)
     await db.query(
-      `INSERT INTO users (id, name, email, phone, password_hash, role, language, is_verified, photo) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) 
-       ON DUPLICATE KEY UPDATE name=?, phone=?, language=?, is_verified=?, photo=?`,
-      [formatted.id, formatted.name, emailLower, formatted.phone, passHash, formatted.role, formatted.language, formatted.is_verified ? 1 : 0, formatted.photo || '',
-       formatted.name, formatted.phone, formatted.language, formatted.is_verified ? 1 : 0, formatted.photo || '']
+      `INSERT INTO users (id, farmer_id, name, email, phone, gender, dob, password_hash, role, language, is_verified, photo) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
+       ON DUPLICATE KEY UPDATE farmer_id=?, name=?, phone=?, gender=?, dob=?, language=?, is_verified=?, photo=?`,
+      [
+        formatted.id, formatted.farmerId, formatted.name, emailLower, formatted.phone, formatted.gender, formatted.dob, passHash, formatted.role, formatted.language, formatted.is_verified ? 1 : 0, formatted.photo || '',
+        formatted.farmerId, formatted.name, formatted.phone, formatted.gender, formatted.dob, formatted.language, formatted.is_verified ? 1 : 0, formatted.photo || ''
+      ]
     );
 
-    // 3. Upsert into MySQL farmers table
+    // 3. Upsert into MySQL farmers table with complete farmer information
     const farmerRowId = `frm-${formatted.id}`;
     const acres = parseFloat(formatted.landArea) || parseFloat(formatted.farm_acres) || 0;
+    const plots = parseInt(formatted.farmPlots) || 1;
     const cropsStr = formatted.primaryCrops || '';
     const soil = formatted.soilType || 'Black';
-    const dist = formatted.district || '';
     const st = formatted.state || '';
+    const dist = formatted.district || '';
+    const tal = formatted.taluka || '';
+    const vil = formatted.village || '';
     const pin = formatted.pincode || '';
+    const unit = formatted.landUnit || 'Acres';
+    const irrStr = Array.isArray(formatted.irrigationSource) ? formatted.irrigationSource.join(', ') : (formatted.irrigationSource || '');
+    const water = formatted.waterAvailability || 'Medium';
 
     await db.query(
-      `INSERT INTO farmers (id, user_id, farm_size_acres, primary_crops, soil_type, district, state, pincode) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?) 
-       ON DUPLICATE KEY UPDATE farm_size_acres=?, primary_crops=?, soil_type=?, district=?, state=?, pincode=?`,
-      [farmerRowId, formatted.id, acres, cropsStr, soil, dist, st, pin,
-       acres, cropsStr, soil, dist, st, pin]
+      `INSERT INTO farmers (
+        id, user_id, farmer_id, name, email, phone, gender, dob, 
+        state, district, taluka, village, pincode, 
+        farm_size_acres, land_unit, farm_plots, soil_type, 
+        irrigation_source, water_availability, primary_crops
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
+       ON DUPLICATE KEY UPDATE 
+        farmer_id=?, name=?, phone=?, gender=?, dob=?, 
+        state=?, district=?, taluka=?, village=?, pincode=?, 
+        farm_size_acres=?, land_unit=?, farm_plots=?, soil_type=?, 
+        irrigation_source=?, water_availability=?, primary_crops=?`,
+      [
+        farmerRowId, formatted.id, formatted.farmerId, formatted.name, emailLower, formatted.phone, formatted.gender, formatted.dob,
+        st, dist, tal, vil, pin,
+        acres, unit, plots, soil,
+        irrStr, water, cropsStr,
+
+        formatted.farmerId, formatted.name, formatted.phone, formatted.gender, formatted.dob,
+        st, dist, tal, vil, pin,
+        acres, unit, plots, soil,
+        irrStr, water, cropsStr
+      ]
     );
 
-    console.log(`[MySQL Database] Synced farmer record for ${emailLower} in MySQL 'farmers' table.`);
+    console.log(`[MySQL Database] Synced complete farmer record for ${emailLower} in MySQL 'farmers' table.`);
   } catch (mysqlErr) {
     console.error('[MySQL Database Error] Failed to save farmer record:', mysqlErr.message);
   }
