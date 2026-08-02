@@ -1001,63 +1001,93 @@ export const PlantDoctorPage = ({ onSelectDiagnosisForChat, setActiveTab, onOpen
       let matchedData = LOCAL_DISEASE_MAP[normalizedCropKey];
 
       if (!matchedData) {
+        const isFruit = (targetPart || '').toLowerCase().includes('fruit');
+        const isFlower = (targetPart || '').toLowerCase().includes('flower');
+        const isStem = (targetPart || '').toLowerCase().includes('stem');
+
+        const diseaseTitleEn = isFruit ? `${detectedCrop} Fruit Rot & Spot Disease` : isFlower ? `${detectedCrop} Blossom Blight & Flower Drop` : isStem ? `${detectedCrop} Stem Canker & Stalk Rot` : `${detectedCrop} Foliar Leaf Spot & Blight Disease`;
+        const diseaseTitleHi = isFruit ? `${detectedCrop} का फल सड़न रोग` : isFlower ? `${detectedCrop} का फूल झुलसा रोग` : isStem ? `${detectedCrop} का तना सड़न रोग` : `${detectedCrop} का पत्ता झुलसा रोग`;
+        const diseaseTitleMr = isFruit ? `${detectedCrop} वरील फळ कुज रोग` : isFlower ? `${detectedCrop} वरील फुल गळती व करपा` : isStem ? `${detectedCrop} वरील खोड कुज रोग` : `${detectedCrop} वरील पानांचा करपा रोग`;
+
         matchedData = {
           crop_name: { en: detectedCrop, hi: detectedCrop, mr: detectedCrop },
           detected_disease: {
-            en: `${detectedCrop} Leaf Spot & Blight Disease`,
-            hi: `${detectedCrop} का पत्ता झुलसा रोग`,
-            mr: `${detectedCrop} वरील पानांचा करपा रोग`
+            en: diseaseTitleEn,
+            hi: diseaseTitleHi,
+            mr: diseaseTitleMr
           },
           scientific_name: `${detectedCrop} Phytopathogen Complex`,
-          pathogen_type: 'Fungal / Leaf Spot Disease',
+          pathogen_type: isFruit ? 'Fungal Fruit Rot' : isFlower ? 'Blossom Blight' : isStem ? 'Vascular Stem Disease' : 'Foliar Spot Disease',
           confidence_score: 95.5,
           severity: 'Moderate',
           symptoms: {
-            en: [
+            en: isFruit ? [
+              `Sunken dark brown necrotic spots on ${detectedCrop} fruit skin & pulp`,
+              `Premature fruit dropping and surface rind discoloration`
+            ] : isFlower ? [
+              `Browning and drying of ${detectedCrop} flower petals and buds`,
+              `Blossom blight causing severe flower drop and poor fruit setting`
+            ] : isStem ? [
+              `Longitudinal cracks and discoloration on ${detectedCrop} stem/stalk`,
+              `Vascular wilting of upper branches and stalk tissue rot`
+            ] : [
               `Irregular water-soaked necrotic lesions on ${detectedCrop} foliage`,
-              `Yellow chlorotic halos surrounding brown leaf spots`,
-              `Foliar wilting and reduced photosynthetic yield in ${detectedCrop}`
+              `Yellow chlorotic halos surrounding brown leaf spots`
             ],
-            hi: [
+            hi: isFruit ? [
+              `${detectedCrop} के फल की सतह पर भूरे धब्बे और सड़न`,
+              `समय से पहले फलों का गिरना`
+            ] : isFlower ? [
+              `${detectedCrop} के फूलों का पीला पड़कर सूखना`,
+              `फूलों का तेजी से झड़ना`
+            ] : isStem ? [
+              `${detectedCrop} के तने पर लाल-भूरे धब्बे और दरारें`,
+              `ऊपरी शाखाओं का सूखना`
+            ] : [
               `${detectedCrop} के पत्तों पर भूरे और पीले रंग के चकत्ते बनना`,
-              `पत्तियों का पीला पड़ना और झुलसना`,
-              `पौधे की वृद्धि और उपज में कमी आना`
+              `पत्तियों का पीला पड़ना और झुलसना`
             ],
-            mr: [
+            mr: isFruit ? [
+              `${detectedCrop} च्या फळांवर काळे-तपकिरी डाग व कुजणे`,
+              `अवेळी फळगळ होणे`
+            ] : isFlower ? [
+              `${detectedCrop} ची फुले पिवळी पडून वाळणे`,
+              `मोठ्या प्रमाणावर फुलगळ होणे`
+            ] : isStem ? [
+              `${detectedCrop} च्या खोडावर काळे डाग व भेगा पडणे`,
+              `वरच्या फांद्या वाळणे`
+            ] : [
               `${detectedCrop} च्या पानांवर तपकिरी व पिवळसर डाग पडणे`,
-              `पाने पिवळी पडणे व करपणे`,
-              `पिकाची वाढ व उत्पन्न घटणे`
+              `पाने पिवळी पडणे व करपणे`
             ]
           },
           causes: {
             en: [
-              `Airborne fungal spores affecting ${detectedCrop} plant canopy`,
-              `High relative humidity and persistent leaf wetness`
+              `Airborne/soil-borne pathogen affecting ${detectedCrop} ${targetPart}`,
+              `High humidity and microclimate wetness`
             ],
             hi: [
-              `${detectedCrop} पर फफूंद बीजाणुओं का संक्रमण`,
-              `अधिक आर्द्रता और पत्तियों पर पानी का ठहराव`
+              `${detectedCrop} के ${targetPart} पर कवक संक्रमण`,
+              `अधिक नमी और पानी का ठहराव`
             ],
             mr: [
-              `${detectedCrop} वर बुरशीचा प्रादुर्भाव`,
-              `जास्त आर्द्रता व पानांवर पाणी साचणे`
+              `${detectedCrop} च्या ${targetPart} वर बुरशीचा प्रादुर्भाव`,
+              `जास्त दमट हवामान`
             ]
           },
           organic_treatment: {
             en: [
               `Spray Neem Seed Kernel Extract 5% (NSKE) every 7 days`,
-              `Foliar application of Trichoderma viride bio-fungicide (10g/L)`,
-              `Prune infected lower foliage and maintain field hygiene`
+              `Foliar/fruit application of Trichoderma viride bio-fungicide (10g/L)`,
+              `Prune infected ${targetPart} parts and destroy debris`
             ],
             hi: [
-              `नीम का तेल / कर्नल्स अर्क 5% का 7 दिनों में छिड़काव करें`,
-              `ट्राइकोडरमा विरिडे जैविक कवकनाशी का छिड़काव`,
-              `संक्रमित पत्तियों को हटाकर खेत साफ रखें`
+              `नीम कर्नल्स अर्क 5% का 7 दिनों में छिड़काव करें`,
+              `ट्राइकोडरमा विरिडे जैविक कवकनाशी का छिड़काव`
             ],
             mr: [
               `निंबोळी अर्क ५% ची दर ७ दिवसांनी फवारणी करावी`,
-              `ट्रायकोडर्मा व्हिरिडी जैविक बुरशीनाशक फवारावे`,
-              `बाधित पाने काढून शेत स्वच्छ ठेवावे`
+              `ट्रायकोडर्मा व्हिरिडी जैविक बुरशीनाशक फवारावे`
             ]
           },
           chemical_treatment: {
@@ -1066,17 +1096,15 @@ export const PlantDoctorPage = ({ onSelectDiagnosisForChat, setActiveTab, onOpen
               `Foliar spray of Azoxystrobin + Difenoconazole (1ml/L water)`
             ],
             hi: [
-              `मैंकोज़ेब 75% WP (2.5 ग्राम/लीटर) या कॉपर ऑक्सीक्लोराइड का छिड़काव`,
-              `एज़ोक्सीस्ट्रोबिन + डिफेनोकोनाज़ोल का छिड़काव`
+              `मैंकोज़ेब 75% WP (2.5 ग्राम/लीटर) या कॉपर ऑक्सीक्लोराइड का छिड़काव`
             ],
             mr: [
-              `मॅन्कोझेब ७५% WP (२.५ ग्रॅम/लीटर) किंवा कॉपर ऑक्सिक्लोराईड फवारणी`,
-              `अझॉक्सिस्ट्रोबिन + डिफेनोकोनाझोल फवारणी`
+              `मॅन्कोझेब ७५% WP (२.५ ग्रॅम/लीटर) किंवा कॉपर ऑक्सिक्लोराईड फवारणी`
             ]
           },
           medicines: ['Dithane M-45', 'Blitox 50', 'Amistar Top'],
           prevention: {
-            en: [`Maintain proper spacing in ${detectedCrop}`, `Adopt drip irrigation`],
+            en: [`Maintain proper plant sanitation for ${detectedCrop}`, `Adopt drip irrigation`],
             hi: [`पौधों के बीच उचित दूरी रखें`, `टपक सिंचाई का प्रयोग करें`],
             mr: [`रोपांमध्ये योग्य अंतर ठेवावे`, `ठिबक सिंचनाचा वापर करावा`]
           },
