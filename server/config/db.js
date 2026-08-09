@@ -20,8 +20,9 @@ pool.getConnection()
     isConnected = true;
     conn.release();
   })
-  .catch(() => {
+  .catch((err) => {
     console.warn('⚠️  MySQL connection failed. Running in memory fallback mode.');
+    console.error('DB Error:', err.message);
     isConnected = false;
   });
 
